@@ -462,7 +462,9 @@ class EarthHeat(PrecomputedHeatPower):
             return False
 
     def update(self):
-        self.mvals = self.k * self.dvals * self.k_a * (np.cos(self.t_phase) + self.delta)
+        hs = np.sign(self.orbitephem0_z)
+        self.mvals = self.k * self.dvals
+        self.mvals += self.k_a * self.dvals * (hs*np.cos(self.t_phase) + self.delta)
         self.tmal_ints = (tmal.OPCODES['precomputed_heat'],
                           self.node.mvals_i,  # dy1/dt index
                           self.mvals_i,  # mvals with precomputed heat input
