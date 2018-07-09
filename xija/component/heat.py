@@ -378,7 +378,7 @@ class EarthHeat(PrecomputedHeatPower):
     def __init__(self, model, node,
                  orbitephem0_x, orbitephem0_y, orbitephem0_z,
                  aoattqt1, aoattqt2, aoattqt3, aoattqt4,
-                 k=1.0):
+                 k=1.0, k_a=1.0, delta):
         ModelComponent.__init__(self, model)
         self.node = self.model.get_comp(node)
         self.orbitephem0_x = self.model.get_comp(orbitephem0_x)
@@ -390,6 +390,8 @@ class EarthHeat(PrecomputedHeatPower):
         self.aoattqt4 = self.model.get_comp(aoattqt4)
         self.n_mvals = 1
         self.add_par('k', k, min=0.0, max=2.0)
+        self.add_par('k_a', k_a, min=0.0, max=2.0)
+        self.add_par('delta', delta, min=-10.0, max=10.0)
 
     @property
     def dvals(self):
@@ -418,6 +420,13 @@ class EarthHeat(PrecomputedHeatPower):
                 self._dvals[i] = illums.sum()
 
             self.put_cache()
+
+        if not hasattr(self, 't_phase'):
+            time2000 = DateTime('2000:355:00:00:00').secs
+            time2010 = DateTime('2010:355:00:00:00').secs
+            secs_per_year = (time2010 - time2000) / 10.0
+            t_year = (self.aoattqt1.times - time2000) / secs_per_year
+            self.t_phase = t_year * 2 * np.pi
 
         return self._dvals
 
@@ -453,7 +462,7 @@ class EarthHeat(PrecomputedHeatPower):
             return False
 
     def update(self):
-        self.mvals = self.k * self.dvals
+        self.mvals = self.k * self.dvals * self.k_a * (np.cos(self.t_phase) + self.delta)
         self.tmal_ints = (tmal.OPCODES['precomputed_heat'],
                           self.node.mvals_i,  # dy1/dt index
                           self.mvals_i,  # mvals with precomputed heat input
