@@ -1062,6 +1062,38 @@ class AcisDpaStatePower(PrecomputedHeatPower):
             ax.set_ylabel('Power (W)')
 
 
+class ACISFEPPower(PrecomputedHeatPower):
+    def __init__(self, model, node, fep_number, pow_val=10.0,
+                 fep_count=None):
+        super(ACISFEPPower, self).__init__(model)
+        self.node = self.model.get_comp(node)
+        self.fep_number = fep_number
+        self.fep_count = self.model.get_comp(fep_count)
+        self.add_par('pow_val', pow_val, min=0.0, max=100.0)
+
+    def __str__(self):
+        return 'acis_fep%d_power' % self.fep_number
+
+    _when_on = None
+
+    @property
+    def when_on(self):
+        if self._when_on is None:
+            if self.fep_number == 0:
+                self._when_on = self.fep_count > 5
+            elif self.fep_number == 1:
+                self._when_on = self.fep_count > 0
+            self._when_on = self._when_on.astype("float64")
+        return self._when_on
+
+    def update(self):
+        self.mvals = self.pow_val * self._when_on
+        self.tmal_ints = (tmal.OPCODES['precomputed_heat'],
+                          self.node.mvals_i,  # dy1/dt index
+                          self.mvals_i)
+        self.tmal_floats = ()
+
+
 class PropHeater(PrecomputedHeatPower):
     """Proportional heater (P = k * (T_set - T) for T < T_set)."""
     def __init__(self, model, node, node_control=None, k=0.1, T_set=20.0):
