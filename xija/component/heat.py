@@ -1063,13 +1063,13 @@ class AcisDpaStatePower(PrecomputedHeatPower):
 
 
 class ACISFEPPower(PrecomputedHeatPower):
-    def __init__(self, model, node, fep_number, pow_val=10.0,
-                 fep_count=None):
+    def __init__(self, model, node, fep_number, 
+                 fep_pow_val=10.0, fep_count=None):
         super(ACISFEPPower, self).__init__(model)
         self.node = self.model.get_comp(node)
         self.fep_number = fep_number
         self.fep_count = self.model.get_comp(fep_count)
-        self.add_par('pow_val', pow_val, min=0.0, max=100.0)
+        self.add_par('fep_pow_val', fep_pow_val, min=0.0, max=100.0)
         self.n_mvals = 1
         self.data = None
         self.data_times = None
