@@ -1070,6 +1070,9 @@ class ACISFEPPower(PrecomputedHeatPower):
         self.fep_number = fep_number
         self.fep_count = self.model.get_comp(fep_count)
         self.add_par('pow_val', pow_val, min=0.0, max=100.0)
+        self.n_mvals = 1
+        self.data = None
+        self.data_times = None
 
     def __str__(self):
         return 'acis_fep%d_power' % self.fep_number
