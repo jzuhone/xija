@@ -1077,20 +1077,20 @@ class ACISFEPPower(PrecomputedHeatPower):
     def __str__(self):
         return 'acis_fep%d_power' % self.fep_number
 
-    _when_on = None
+    _turn_on = None
 
     @property
-    def when_on(self):
-        if self._when_on is None:
+    def turn_on(self):
+        if self._turn_on is None:
             if self.fep_number == 0:
-                self._when_on = self.fep_count > 5
+                self._turn_on = self.fep_count > 5
             elif self.fep_number == 1:
-                self._when_on = self.fep_count > 0
-            self._when_on = self._when_on.astype("float64")
-        return self._when_on
+                self._turn_on = self.fep_count > 0
+            self._turn_on = self._turn_on.astype("float64")
+        return self._turn_on
 
     def update(self):
-        self.mvals = self.pow_val * self._when_on
+        self.mvals = self.pow_val * self._turn_on
         self.tmal_ints = (tmal.OPCODES['precomputed_heat'],
                           self.node.mvals_i,  # dy1/dt index
                           self.mvals_i)
