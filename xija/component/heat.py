@@ -1081,10 +1081,12 @@ class ACISFEPPower(PrecomputedHeatPower):
     @property
     def turn_on(self):
         if self._turn_on is None:
+            last_fep = np.roll(self.fep_count, 1)
+            last_fep[0] = self.fep_count[0]
             if self.fep_number == 0:
-                self._turn_on = self.fep_count > 5
+                self._turn_on = (self.fep_count == 6) & (last_fep == 5)
             elif self.fep_number == 1:
-                self._turn_on = self.fep_count > 0
+                self._turn_on = (self.fep_count > 0) & (last_fep == 0)
             self._turn_on = self._turn_on.astype("float64")
         return self._turn_on
 
