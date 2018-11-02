@@ -438,7 +438,6 @@ class SolarHeatHrc(SolarHeat):
             self.hrc_mask = self.simz_comp.dvals < 0
         self._dvals[self.hrc_mask] += self.hrc_bias
 
-
 class SolarHeatHrcOpts(SolarHeat):
     """Solar heating (pitch and SIM-Z dependent, two parameters for
     HRC-I and HRC-S)
@@ -1064,12 +1063,12 @@ class AcisDpaStatePower(PrecomputedHeatPower):
 
 class ACISFEPPower(PrecomputedHeatPower):
     def __init__(self, model, node, fep_number, 
-                 fep_pow_val=10.0, fep_count=None):
+                 P=10.0, fep_count=None):
         super(ACISFEPPower, self).__init__(model)
         self.node = self.model.get_comp(node)
         self.fep_number = fep_number
         self.fep_count = self.model.get_comp(fep_count)
-        self.add_par('fep_pow_val', fep_pow_val, min=0.0, max=100.0)
+        self.add_par('P', P, min=0.0, max=100.0)
         self.n_mvals = 1
         self.data = None
         self.data_times = None
@@ -1090,7 +1089,7 @@ class ACISFEPPower(PrecomputedHeatPower):
         return self._turn_on
 
     def update(self):
-        self.mvals = self.pow_val * self._turn_on
+        self.mvals = self.P * self.turn_on
         self.tmal_ints = (tmal.OPCODES['precomputed_heat'],
                           self.node.mvals_i,  # dy1/dt index
                           self.mvals_i)
