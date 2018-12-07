@@ -1062,13 +1062,16 @@ class AcisDpaStatePower(PrecomputedHeatPower):
 
 
 class ACISFEPPower(PrecomputedHeatPower):
-    def __init__(self, model, node, fep_number, 
-                 P=10.0, fep_count=None):
+    def __init__(self, model, node, fep_number,
+                 P0=10.0, P1=10.0, fep_count=None,
+                 clocking=None):
         super(ACISFEPPower, self).__init__(model)
         self.node = self.model.get_comp(node)
         self.fep_number = fep_number
         self.fep_count = self.model.get_comp(fep_count)
-        self.add_par('P', P, min=0.0, max=100.0)
+        self.clocking = self.model.get_comp(clocking)
+        self.add_par('P0', P0, min=0.0, max=100.0)
+        self.add_par('P1', P1, min=0.0, max=100.0)
         self.n_mvals = 1
         self.data = None
         self.data_times = None
@@ -1076,22 +1079,21 @@ class ACISFEPPower(PrecomputedHeatPower):
     def __str__(self):
         return 'acis_fep%d_power' % self.fep_number
 
-    _turn_on = None
+    _fep_on = None
 
     @property
-    def turn_on(self):
-        if self._turn_on is None:
-            last_fep = np.roll(self.fep_count, 1)
-            last_fep[0] = self.fep_count[0]
+    def fep_on(self):
+        if self._fep_on is None:
+            self._fep_on = np.zeros_like(self.fep_count, dtype="float64")
             if self.fep_number == 0:
-                self._turn_on = (self.fep_count == 6) & (last_fep == 5)
-            elif self.fep_number == 1:
-                self._turn_on = (self.fep_count > 0) & (last_fep == 0)
-            self._turn_on = self._turn_on.astype("float64")
-        return self._turn_on
+                self._fep_on += self.fep_count == 6
+            else:
+                self._fep_on += self.fep_count >= self.fep_number
+        return self._fep_on
 
     def update(self):
-        self.mvals = self.P * self.turn_on
+        self.mvals = self.P0 * (self.clocking == 0) * self.fep_on
+        self.mvals += self.P1 * (self.clocking == 1) * self.fep_on
         self.tmal_ints = (tmal.OPCODES['precomputed_heat'],
                           self.node.mvals_i,  # dy1/dt index
                           self.mvals_i)
