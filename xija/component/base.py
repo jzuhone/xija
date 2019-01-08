@@ -378,6 +378,9 @@ class HeatSink(ModelComponent):
     def __str__(self):
         return 'heatsink__{0}'.format(self.node)
 
+    @property
+    def conds(self):
+        return np.ones(self.model.n_times, dtype='int32')
 
 class HeatSinkRef(ModelComponent):
     """Fixed temperature external heat bath, reparameterized so that varying
@@ -416,6 +419,9 @@ class HeatSinkRef(ModelComponent):
     def __str__(self):
         return 'heatsink__{0}'.format(self.node)
 
+    @property
+    def conds(self):
+        return np.ones(self.model.n_times, dtype='int32')
 
 class Pitch(TelemData):
     def __init__(self, model):

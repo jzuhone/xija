@@ -29,6 +29,7 @@ int calc_model_1(int n_times, int n_preds, int n_tmals, double dt,
             }
 
             for (i = 0; i < n_tmals; i++) {
+	        if (conds[i][j] == 0) continue;
                 opcode = tmal_ints[i][0];
                 i1 = tmal_ints[i][1];
                 i2 = tmal_ints[i][2];

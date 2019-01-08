@@ -672,15 +672,22 @@ class XijaModel(object):
             self.tmal_ints[i, 0:len(comp.tmal_ints)] = comp.tmal_ints
             self.tmal_floats[i, 0:len(comp.tmal_floats)] = comp.tmal_floats
 
+    def make_conds(self):
+        tmal_comps = [x for x in self.comps if hasattr(x, 'tmal_ints')]
+        self.conds = np.vstack(comp.conds for comp in tmal_comps)
+        print(np.count_nonzero(self.conds), np.prod(self.conds.shape))
+
     def calc(self):
         """Calculate the model.  The results appear in the self.mvals array."""
         self.make_tmal()
+        self.make_conds()
         # int calc_model(int n_times, int n_preds, int n_tmals, float dt,
         #                float **mvals, int **tmal_ints, float **tmal_floats)
 
         mvals = convert_type_star_star(self.mvals, ctypes.c_double)
         tmal_ints = convert_type_star_star(self.tmal_ints, ctypes.c_int)
         tmal_floats = convert_type_star_star(self.tmal_floats, ctypes.c_double)
+        conds = convert_type_star_star(self.conds, ctypes.c_int)
 
         if self.evolve_method == 1:
             dt = self.dt_ksec * 2

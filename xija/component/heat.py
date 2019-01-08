@@ -44,6 +44,10 @@ class PrecomputedHeatPower(ModelComponent):
     def exp(days, tau):
         return 1 - np.exp(-days / tau)
 
+    @property
+    def conds(self):
+        return np.ones(self.model.n_times, dtype='int32')
+
 
 class ActiveHeatPower(ModelComponent):
     """Component that provides active heat power input which depends on
