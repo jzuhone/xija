@@ -1065,45 +1065,6 @@ class AcisDpaStatePower(PrecomputedHeatPower):
             ax.set_ylabel('Power (W)')
 
 
-class ACISFEPPower(PrecomputedHeatPower):
-    def __init__(self, model, node, fep_number,
-                 P0=10.0, P1=10.0, fep_count=None,
-                 clocking=None):
-        super(ACISFEPPower, self).__init__(model)
-        self.node = self.model.get_comp(node)
-        self.fep_number = fep_number
-        self.fep_count = self.model.get_comp(fep_count)
-        self.clocking = self.model.get_comp(clocking)
-        self.add_par('P0', P0, min=0.0, max=100.0)
-        self.add_par('P1', P1, min=0.0, max=100.0)
-        self.n_mvals = 1
-        self.data = None
-        self.data_times = None
-
-    def __str__(self):
-        return 'fep%d_power' % self.fep_number
-
-    _fep_on = None
-
-    @property
-    def fep_on(self):
-        if self._fep_on is None:
-            self._fep_on = np.zeros_like(self.fep_count.dvals, dtype="float64")
-            if self.fep_number == 0:
-                self._fep_on += (self.fep_count.dvals == 6)
-            else:
-                self._fep_on += (self.fep_count.dvals >= self.fep_number)
-        return self._fep_on
-
-    def update(self):
-        self.mvals = self.P0 * (self.clocking.dvals == 0) * self.fep_on
-        self.mvals += self.P1 * (self.clocking.dvals == 1) * self.fep_on
-        self.tmal_ints = (tmal.OPCODES['precomputed_heat'],
-                          self.node.mvals_i,  # dy1/dt index
-                          self.mvals_i)
-        self.tmal_floats = ()
-
-
 class PropHeater(PrecomputedHeatPower):
     """Proportional heater (P = k * (T_set - T) for T < T_set)."""
     def __init__(self, model, node, node_control=None, k=0.1, T_set=20.0):
@@ -1361,3 +1322,41 @@ def get_dists_lons_lats(ephems, q_atts):
         lats[ii] = np.arctan2(peb[2], s)
 
     return dists, lons, lats
+
+
+class FEPPropHeater(PrecomputedHeatPower):
+    def __init__(self, model, node, fep_number,
+                 node_control=None, k=0.1, T_set=20.0,
+                 fep_count=None):
+        super(FEPPropHeater, self).__init__(model)
+        self.fep_number = fep_number
+        self.node = self.model.get_comp(node)
+        self.node_control = (self.node if node_control is None
+                             else self.model.get_comp(node_control))
+        self.add_par('k', k, min=0.0, max=1.0)
+        self.add_par('T_set', T_set, min=-50.0, max=100.0)
+        self.fep_count = self.model.get_comp(fep_count)
+        self.n_mvals = 1
+
+    def __str__(self):
+        return 'prop_heat__{0}'.format(self.node)
+
+    def update(self):
+        self.tmal_ints = (tmal.OPCODES['proportional_heater'],
+                          self.node.mvals_i,  # dy1/dt index
+                          self.node_control.mvals_i,
+                          self.mvals_i
+                          )
+        self.tmal_floats = (self.T_set, self.k)
+
+    _conds = None
+
+    @property
+    def conds(self):
+        if self._conds is None:
+            self._conds = np.zeros_like(self.fep_count.dvals, dtype="int32")
+            if self.fep_number == 0:
+                self._conds += (self.fep_count.dvals == 6).astype("int32")
+            else:
+                self._conds += (self.fep_count.dvals > 0).astype("int32")
+        return self._conds
