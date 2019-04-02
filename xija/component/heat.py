@@ -1323,6 +1323,7 @@ def get_dists_lons_lats(ephems, q_atts):
 
     return dists, lons, lats
 
+"""
 class ACISFEPPower(PrecomputedHeatPower):
     def __init__(self, model, node, fep_number, 
                  P=10.0, fep_count=None):
@@ -1368,7 +1369,7 @@ class ACISFEPPower(PrecomputedHeatPower):
             ax.grid()
             ax.set_title('{}: data (blue)'.format(self.name))
             ax.set_ylabel('Power')
-
+"""
 
 class FEPPropHeater(PrecomputedHeatPower):
     def __init__(self, model, node, fep_number,
@@ -1462,4 +1463,43 @@ class FEPHeatSinkRef(ModelComponent):
             else:
                 self._conds += (self.fep_count.dvals == 0).astype("int32")
         return self._conds
+
+class ACISFEPPower(PrecomputedHeatPower):
+    def __init__(self, model, node, fep_number,
+                 P0=10.0, P1=10.0, fep_count=None,
+                 clocking=None):
+        super(ACISFEPPower, self).__init__(model)
+        self.node = self.model.get_comp(node)
+        self.fep_number = fep_number
+        self.fep_count = self.model.get_comp(fep_count)
+        self.clocking = self.model.get_comp(clocking)
+        self.add_par('P0', P0, min=0.0, max=100.0)
+        self.add_par('P1', P1, min=0.0, max=100.0)
+        self.n_mvals = 1
+        self.data = None
+        self.data_times = None
+
+    def __str__(self):
+        return 'fep%d_power' % self.fep_number
+
+    _fep_on = None
+
+    @property
+    def fep_on(self):
+        if self._fep_on is None:
+            self._fep_on = np.zeros_like(self.fep_count.dvals, dtype="float64")
+            if self.fep_number == 0:
+                self._fep_on += (self.fep_count.dvals == 6)
+            else:
+                self._fep_on += (self.fep_count.dvals >= self.fep_number)
+        return self._fep_on
+
+    def update(self):
+        self.mvals = self.P0 * (self.clocking.dvals == 0) * self.fep_on
+        self.mvals += self.P1 * (self.clocking.dvals == 1) * self.fep_on
+        self.tmal_ints = (tmal.OPCODES['precomputed_heat'],
+                          self.node.mvals_i,  # dy1/dt index
+                          self.mvals_i)
+        self.tmal_floats = ()
+
 
