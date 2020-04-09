@@ -79,6 +79,20 @@ void dTdt(int j, int half, int n_preds, int n_tmals, int **tmal_ints,
                 }
                 if (half == 0) mvals[i3][j] = mvals_i3;
                 break;
+            case 5: /* ACIS FP setpoint */
+                dt2 = mvals_i2 - y[i1];
+                i3 = tmal_ints[i][3];
+                if (dt2 > 0) {
+                    mvals_i3 = tmal_floats[i][1];
+                    if (i1 < n_preds) {
+                        deriv[i1] += mvals_i3;
+                    }
+                } else {
+                    mvals_i3 = 0.0;
+                }
+                if (half == 0) mvals[i3][j] = mvals_i3;
+                break;
+
         }
     }
 
