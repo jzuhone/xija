@@ -83,7 +83,7 @@ void dTdt(int j, int half, int n_preds, int n_tmals, int **tmal_ints,
                 dt2 = mvals_i2 - y[i1];
                 i3 = tmal_ints[i][3];
                 if (dt2 > 0) {
-                    mvals_i3 = tmal_floats[i][1];
+                    mvals_i3 = tmal_floats[i][0];
                     if (i1 < n_preds) {
                         deriv[i1] += mvals_i3;
                     }

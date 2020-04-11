@@ -1011,39 +1011,20 @@ class ThermostatHeater(ActiveHeatPower):
             ax.set_ylabel('Power')
 
 
-class ACISFPSetPoint(ThermostatHeater):
-    def __init__(self, model, node, setpt, T_sets=None,
-                 P=0.1):
-        super(ACISFPSetPoint, self).__init__(model, node, P=P)
+class ACISFPSetPointHeat(ThermostatHeater):
+    def __init__(self, model, node, setpt, node_control=None, P=0.1):
+        ActiveHeatPower.__init__(self, model)
         self.node = self.model.get_comp(node)
         self.setpt = self.model.get_comp(setpt)
+        self.node_control = (self.node if node_control is None
+                             else self.model.get_comp(node_control))
         self.add_par('P', P, min=0.0, max=1.0)
         self.n_mvals = 1
 
-        if T_sets is None:
-            T_sets = {121: -119.62}
-
-        for T_set, T_set_val in T_sets.items():
-            self.add_par('T_set_m{:d}'.format(int(-T_set)), T_set_val, 
-                         min=-127.0, max=-100.0)
-
-        self.T_set_pars = [par for par in self.pars
-                           if par.name.startswith('T_set_m')]
-
     def __str__(self):
-        return 'acisfp_setpoint__{0}'.format(self.node)
-
-    _par_idxs = None
-    @property
-    def par_idxs(self):
-        if self._par_idxs is None:
-            _, self._par_idxs = np.unique(self.setpt.dvals.astype("int"), 
-                                          return_inverse=True)
-        return self._par_idxs
+        return 'acisfp_setpoint_heat__{0}'.format(self.node)
 
     def update(self):
-        tset_parvals = np.array([par.val for par in self.T_set_pars])
-        tsets = tset_parvals[self.par_idxs]
 
         self.tmal_ints = (tmal.OPCODES['acisfp_setpoint'],
                           self.node.mvals_i,  # dy1/dt index

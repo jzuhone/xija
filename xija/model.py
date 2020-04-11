@@ -257,7 +257,7 @@ class XijaModel(object):
     cmd_states = property(_get_cmd_states, _set_cmd_states)
     """test cmdstats"""
 
-    def fetch(self, msid, attr='vals', method='linear'):
+    def fetch(self, msid, attr='vals', method='linear', stat='5min'):
         """Get data from the Chandra engineering archive."""
         tpad = DEFAULT_DT*5.0
         datestart = DateTime(self.tstart - tpad).date
@@ -266,7 +266,7 @@ class XijaModel(object):
                     (msid, datestart, datestop))
         try:
             import Ska.engarchive.fetch_sci as fetch
-            tlm = fetch.MSID(msid, datestart, datestop, stat='5min')
+            tlm = fetch.MSID(msid, datestart, datestop, stat=stat)
             tlm.filter_bad_times()
         except ImportError:
             raise ValueError('Ska.engarchive.fetch not available')

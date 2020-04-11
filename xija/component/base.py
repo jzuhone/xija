@@ -411,6 +411,47 @@ class AcisFPtemp(Node):
         return 'fptemp'
 
 
+class ACISFPSetPoint(TelemData):
+    def __init__(self, model):
+        super(ACISFPSetPoint, self).__init__(
+            model, 'cmd_state_acisfp_setpoint_328', units='degC')
+        self.setpts = [-126, -121]
+        self.setpt_reals = np.array([-125.0,-119.62])
+
+    def __str__(self):
+        return 'acisfp_setpoint'
+
+    def get_dvals_tlm(self):
+        return self.model.fetch(self.msid, attr='vals', method='nearest',
+                                stat=None)
+
+    _par_idxs = None
+    @property
+    def par_idxs(self):
+        if self._par_idxs is None:
+            _, self._par_idxs = np.unique(self.dvals.astype("int"),
+                                          return_inverse=True)
+        return self._par_idxs
+
+    def update(self):
+        self.mvals = self.setpt_reals[self.par_idxs]
+
+    def plot_data__time(self, fig, ax):
+        lines = ax.get_lines()
+        if not lines:
+            plot_cxctime(self.model.times, self.mvals, ls='-', color='#d92121',
+                         fig=fig, ax=ax)
+            plot_cxctime(self.model.times, self.dvals, ls='-', color='#386cb0',
+                         fig=fig, ax=ax)
+            ax.grid()
+            ax.set_title('ACIS FP Setpoint: cmd (blue) value (red)')
+            ax.set_ylabel("Setpoint (degC)")
+            ax.margins(0.05)
+        else:
+            lines[0].set_data(self.model_plotdate, self.mvals)
+            lines[1].set_data(self.model_plotdate, self.dvals)
+
+
 class Eclipse(TelemData):
     def __init__(self, model):
         TelemData.__init__(self, model, 'aoeclips')
