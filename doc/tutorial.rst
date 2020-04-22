@@ -11,20 +11,14 @@ When you first start working with Xija create a local copy of the Xija source co
   % git clone git://github.com/sot/xija.git  # on HEAD
   % git clone /proj/sot/ska/git/xija         # on GRETA
   % cd xija
-  % setenv XIJA $PWD
-  % python setup.py build_ext --inplace  # build C core module
+  % python setup.py develop  # build C core module
+  % setenv XIJA $PWD # or export XIJA=$PWD if bash or zsh
 
 Later on you should work in your xija repository and update to the latest development version of Xija::
 
   % cd ~/git/xija
   % git pull   # Update with latest dev version of xija
-  % python setup.py build_ext --inplace  # build C core module
-
-Finally set the PYTHONPATH environment variable to ensure that you import
-your local version of xija from any sub-directory where you might be
-working::
-
-  % setenv PYTHONPATH $XIJA
+  % python setup.py develop  # build C core module
 
 Navigating the Xija source
 ---------------------------
@@ -32,8 +26,7 @@ Navigating the Xija source
 The `Xija source <http://github.com/sot/xija>`_ is always available at `github
 <http://github.com>`_.  Within the **Files** tab you will find a directory
 browser.  At the top level you will see the ``xija`` directory that contains
-the actual Xija package files.  There is also ``gui_fit.py`` that is the GUI
-model fitting tool.  Within the ``xija`` directory the key files are::
+the actual Xija package files. Within the ``xija`` directory the key files are::
 
   model.py             Top-level model class and functionality
   component/           Model components directory
@@ -223,11 +216,6 @@ residuals versus temperature for the ACIS DPA model.  You can run this with
   plt.legend(loc='upper right')
 
   plt.savefig('dpa_resid_{}_{}.png'.format(start, stop))
-
-.. Note::
-
-   ``ThermalModel`` is a synonym for ``XijaModel`` available for back-compatibility,
-   but new code should use ``XijaModel``.
 
 Modifying an existing model
 ----------------------------
