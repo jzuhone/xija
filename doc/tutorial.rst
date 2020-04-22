@@ -498,21 +498,3 @@ Then do the following:
 * Try fitting various parameter sets using both the check boxes and the glob
   tool to freeze and thaw.
 
-Team ACIS
-^^^^^^^^^^
-
-**Goal**: Make a model for 1DEAMZT that is analogous to the 1DPAMZT model.
-
-Choose the best way to derive a DEA model from the DPA model.
-
-Team Spacecraft
-^^^^^^^^^^^^^^^^
-
-**Goal**: Make a working model for PCM03T.
-
-The first step will be to calibrate the PCM03T model that we have created
-which uses TCYLAFT6 and TCYLFMZM as known inputs.  The second step will be to
-integrate the PCM03T model into the MinusZ model.
-
-  % cp ~aldcroft/git/xija/examples/pcm/pcm.json ./    # Spacecraft
-
