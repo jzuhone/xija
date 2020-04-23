@@ -474,6 +474,18 @@ Write Table Button
 .. image:: write_table.png
    :width: 25 %
 
+Annotate Line Option
+^^^^^^^^^^^^^^^^^^^^
+
+.. image:: annot_line.png
+   :width: 75 %
+
+Annotate Limits and Radzones
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: annot_lims_rads.png
+   :width: 75 %
+
 Bad Times
 ---------
 
