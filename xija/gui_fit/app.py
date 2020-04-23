@@ -1080,7 +1080,7 @@ def get_options():
     parser.add_argument("--days",
                         type=float,
                         default=15,  # Fix this
-                        help="Number of days in fit interval (default=90")
+                        help="Number of days in fit interval (default=90)")
     parser.add_argument("--stop",
                         default=DateTime() - 10,  # remove this
                         help="Stop time of fit interval (default=model values)")
