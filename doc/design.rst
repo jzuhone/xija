@@ -85,7 +85,7 @@ Single-step integration
 The very fast state-based analytic solutions used for purely passive
 models cannot accomodate model components that depend on the node
 temperatures or are continuously variable.  Instead the Xija framework
-uses 2nd order Runge-Kutte integration to propagate the node
+uses Runge-Kutta integration to propagate the node
 temperatures.  Model components such as heaters respond to the
 most-recently calculated temperatures.  The integration code is
 written in C for performance.

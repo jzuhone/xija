@@ -4,21 +4,25 @@ Tutorial
 Setup for Xija modeling
 ------------------------
 
-When you first start working with Xija create a local copy of the Xija source code::
+When you first start working with Xija create a local copy of the Xija source code:
 
-  % mkdir -p ~/git  # OR WHEREVER, but ~/git is easiest!
-  % cd ~/git
-  % git clone git://github.com/sot/xija.git  # on HEAD
-  % git clone /proj/sot/ska/git/xija         # on GRETA
-  % cd xija
-  % python setup.py develop  # build C core module
-  % setenv XIJA $PWD # or export XIJA=$PWD if bash or zsh
+.. code-block:: bash
 
-Later on you should work in your xija repository and update to the latest development version of Xija::
+    % mkdir -p ~/git  # OR WHEREVER, but ~/git is easiest!
+    % cd ~/git
+    % git clone git://github.com/sot/xija.git  # on HEAD
+    % git clone /proj/sot/ska/git/xija         # on GRETA
+    % cd xija
+    % python setup.py develop  # build C core module
+    % setenv XIJA $PWD # or export XIJA=$PWD if bash or zsh
 
-  % cd ~/git/xija
-  % git pull   # Update with latest dev version of xija
-  % python setup.py develop  # build C core module
+Later on you should work in your xija repository and update to the latest development version of Xija:
+
+.. code-block:: bash
+
+    % cd ~/git/xija
+    % git pull   # Update with latest dev version of xija
+    % python setup.py develop  # build C core module
 
 Navigating the Xija source
 ---------------------------
@@ -57,31 +61,33 @@ Example 1: simplest model
 
 Start with the simplest example with a single node with solar heating.  We use only two
 bin points at 45 and 180 degrees.
-::
 
-  model = xija.XijaModel(name, start='2015:001', stop='2015:050')
+.. code-block:: python
 
-  model.add(xija.Node, 'aacccdpt')
+    model = xija.XijaModel(name, start='2015:001', stop='2015:050')
+    
+    model.add(xija.Node, 'aacccdpt')
+    
+    model.add(xija.Pitch)
+    
+    model.add(xija.Eclipse)
+    
+    model.add(xija.SolarHeat,
+              node='aacccdpt',
+              pitch_comp='pitch',
+              eclipse_comp='eclipse',
+              P_pitches=[45, 180],
+              Ps=[0.0, 0.0],
+              ampl=0.0,
+              epoch='2010:001')
 
-  model.add(xija.Pitch)
+To make and run the model do:
 
-  model.add(xija.Eclipse)
+.. code-block:: bash
 
-  model.add(xija.SolarHeat,
-            node='aacccdpt',
-            pitch_comp='pitch',
-            eclipse_comp='eclipse',
-            P_pitches=[45, 180],
-            Ps=[0.0, 0.0],
-            ampl=0.0,
-            epoch='2010:001',
-           )
-
-To make and run the model do::
-
-  % cd $XIJA/examples/doc
-  % python example1.py
-  % xija_gui_fit example1.json
+    % cd $XIJA/examples/doc
+    % python example1.py
+    % xija_gui_fit example1.json
 
 Points for discussion:
 
@@ -91,19 +97,21 @@ Example 2: add a heat sink
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Same as example 1, but add a heat sink with a temperature of -16 C and a tau of 30 ksec.
-::
 
-  model.add(xija.HeatSink,
-            node='aacccdpt',
-            tau=30.0,
-            T=-16.0,
-           )
+.. code-block:: python
 
-To make and run the model do::
+    model.add(xija.HeatSink,
+              node='aacccdpt',
+              tau=30.0,
+              T=-16.0)
 
-  % cd $XIJA/examples/doc
-  % python example2.py
-  % xija_gui_fit example2.json
+To make and run the model do:
+
+.. code-block:: bash
+
+    % cd $XIJA/examples/doc
+    % python example2.py
+    % xija_gui_fit example2.json
 
 Points for discussion:
 
@@ -119,19 +127,21 @@ Points for discussion:
 Example 3: add pitch bins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Same as example 2, but now the ``SolarHeat`` component has 6 pitch bins::
+Same as example 2, but now the ``SolarHeat`` component has 6 pitch bins:
 
-  model.add(xija.SolarHeat,
-            node='aacccdpt',
-            pitch_comp='pitch',
-            eclipse_comp='eclipse',
-            [45, 70, 90, 115, 140, 180],
-            [0.0] * 6,
-            ampl=0.0,
-            epoch='2010:001',
-           )
+.. code-block:: python
 
-To make and run the model do::
+    model.add(xija.SolarHeat,
+              node='aacccdpt',
+              pitch_comp='pitch',
+              eclipse_comp='eclipse',
+              [45, 70, 90, 115, 140, 180],
+              [0.0] * 6, ampl=0.0,
+              epoch='2010:001')
+
+To make and run the model do:
+
+.. code-block:: bash
 
   % cd $XIJA/examples/doc
   % python example3.py
@@ -140,12 +150,10 @@ To make and run the model do::
 Points for discussion:
 
 * Fit the model
-
-  * Naive try.
-  * Set heat sink time scale
-
+    * Naive try.
+    * Set heat sink time scale
 * Managing degenerate model parameters (heatsink T, solarheat bias, solarheat P values).
-* But note: eclipse data breaks degeneracy.  This can be used for short-timescale components.
+* But note: eclipse data breaks degeneracy. This can be used for short-timescale components.
 * Save the best fit as ``example3_fit.json``
 
 
@@ -154,68 +162,69 @@ Working with a model
 
 As an example, here is the code (available in ``examples/dpa/plot_dpa_resid.py``) to plot
 residuals versus temperature for the ACIS DPA model.  You can run this with
-``cd examples/dpa; python plot_dpa_resid.py``.
-::
+``cd examples/dpa; python plot_dpa_resid.py``:
 
-  import xija
-  import numpy as np
-  import matplotlib.pyplot as plt
-  from Ska.Matplotlib import pointpair
+.. code-block:: python
 
-  start = '2010:001'
-  stop = '2011:345'
-
-  msid = '1dpamzt'
-  model_spec = 'dpa.json'
-
-  model = xija.XijaModel('dpa', start=start, stop=stop,
+    import xija
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from Ska.Matplotlib import pointpair
+    
+    start = '2010:001'
+    stop = '2011:345'
+    
+    msid = '1dpamzt'
+    model_spec = 'dpa.json'
+    
+    model = xija.XijaModel('dpa', start=start, stop=stop,
                             model_spec=model_spec)
-  model.make()
-  model.calc()
-
-  dpa = model.get_comp(msid)
-  resid = dpa.dvals - dpa.mvals
-
-  xscatter = np.random.uniform(-0.2, 0.2, size=len(dpa.dvals))
-  yscatter = np.random.uniform(-0.2, 0.2, size=len(dpa.dvals))
-  plt.clf()
-  plt.plot(dpa.dvals + xscatter, resid + yscatter, '.', ms=1.0, alpha=1)
-  plt.xlabel('{} telemetry (degC)'.format(msid.upper()))
-  plt.ylabel('Data - Model (degC)')
-  plt.title('Residual vs. Data ({} - {})'.format(start, stop))
-
-  bins = np.arange(6, 26.1, 2.0)
-  r1 = []
-  r99 = []
-  ns = []
-  xs = []
-  for x0, x1 in zip(bins[:-1], bins[1:]):
+    model.make()
+    model.calc()
+    
+    dpa = model.get_comp(msid)
+    resid = dpa.dvals - dpa.mvals
+    
+    xscatter = np.random.uniform(-0.2, 0.2, size=len(dpa.dvals))
+    yscatter = np.random.uniform(-0.2, 0.2, size=len(dpa.dvals))
+    plt.clf()
+    plt.plot(dpa.dvals + xscatter, resid + yscatter, '.', ms=1.0, alpha=1)
+    plt.xlabel('{} telemetry (degC)'.format(msid.upper()))
+    plt.ylabel('Data - Model (degC)')
+    plt.title('Residual vs. Data ({} - {})'.format(start, stop))
+    
+    bins = np.arange(6, 26.1, 2.0)
+    r1 = []
+    r99 = []
+    ns = []
+    xs = []
+    for x0, x1 in zip(bins[:-1], bins[1:]):
       ok = (dpa.dvals >= x0) & (dpa.dvals < x1)
       val1, val99 = np.percentile(resid[ok], [1, 99])
       xs.append((x0 + x1) / 2)
       r1.append(val1)
       r99.append(val99)
       ns.append(sum(ok))
-
-  xspp = pointpair(bins[:-1], bins[1:])
-  r1pp = pointpair(r1)
-  r99pp = pointpair(r99)
-
-  plt.plot(xspp, r1pp, '-r')
-  plt.plot(xspp, r99pp, '-r', label='1% and 99% limits')
-  plt.grid()
-  plt.ylim(-8, 14)
-  plt.xlim(5, 31)
-
-  plt.plot([5, 31], [3.5, 3.5], 'g--', alpha=1, label='+/- 3.5 degC')
-  plt.plot([5, 31], [-3.5, -3.5], 'g--', alpha=1)
-  for x, n, y in zip(xs, ns, r99):
+    
+    xspp = pointpair(bins[:-1], bins[1:])
+    r1pp = pointpair(r1)
+    r99pp = pointpair(r99)
+    
+    plt.plot(xspp, r1pp, '-r')
+    plt.plot(xspp, r99pp, '-r', label='1% and 99% limits')
+    plt.grid()
+    plt.ylim(-8, 14)
+    plt.xlim(5, 31)
+    
+    plt.plot([5, 31], [3.5, 3.5], 'g--', alpha=1, label='+/- 3.5 degC')
+    plt.plot([5, 31], [-3.5, -3.5], 'g--', alpha=1)
+    for x, n, y in zip(xs, ns, r99):
       plt.text(x, max(y + 1, 5), 'N={}'.format(n),
            rotation='vertical', va='bottom', ha='center')
-
-  plt.legend(loc='upper right')
-
-  plt.savefig('dpa_resid_{}_{}.png'.format(start, stop))
+    
+    plt.legend(loc='upper right')
+    
+    plt.savefig('dpa_resid_{}_{}.png'.format(start, stop))
 
 Modifying an existing model
 ----------------------------
@@ -249,7 +258,7 @@ Edit the model specification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Xija models are stored in a file format called `JSON
-<http://en.wikipedia.org/wiki/JSON>`_.  This captures the model definition,
+<http://en.wikipedia.org/wiki/JSON>`_. This captures the model definition,
 model parameters, and also everything about the GUI fit application (screen
 size, plots, frozen / thawed parameters) when the model was saved.  
 
@@ -263,12 +272,16 @@ A very good way to modify an existing model spec is to write it back out as
 Python code. This can be done in three ways:
 
 * Within ``xija_gui_fit`` save the model with a name ending in ``.py``
-* Within a Python session or script use the ``write()`` method of a Xija model::
+* Within a Python session or script use the ``write()`` method of a Xija model:
+
+.. code-block:: python
 
     model = xija.XijaModel('mdl', model_spec='mdl.json')
     model.write('mdl.py')
 
-* From the command line use the `xija.convert` module::
+* From the command line use the ``xija.convert`` module:
+
+.. code-block:: bash
 
     % python -m xija.convert --help
     % python -m xija.convert mdl.json
@@ -291,15 +304,19 @@ The image below shows an example of fitting the ACIS DPA model with
    :width: 100 %
 
 
-Live demo using a Ska window::
+Live demo using a Ska window:
 
-  cd $XIJA/examples/pcm
-  xija_gui_fit pcm.json --stop 2012:095 --days 30
+.. code-block:: bash
+
+    % cd $XIJA/examples/pcm
+    % xija_gui_fit pcm.json --stop 2012:095 --days 30
 
 Command line options
 ^^^^^^^^^^^^^^^^^^^^^
 
-The ``xija_gui_fit`` tool supports the following command line options::
+The ``xija_gui_fit`` tool supports the following command line options:
+
+.. code-block:: bash
 
     % xija_gui_fit --help
 
@@ -324,38 +341,42 @@ The ``xija_gui_fit`` tool supports the following command line options::
                             Set data value as '<comp_name>=<value>'
       --quiet               Suppress screen output
 
-Most of the time you should use the ``--days`` and ``--stop`` options.  Note that
+Most of the time you should use the ``--days`` and ``--stop`` options. Note that
 if you have saved a model specification and then restart ``xija_gui_fit``, the
 most recently specified values will be used by default.
 
 ``--fit-method``
   The default fit method is ``simplex`` which is a good compromise between speed
-  and completeness.  For the fastest fitting use ``levmar``.  If already have
+  and completeness. For the fastest fitting use ``levmar``. If already have
   somewhat decent parameters and want to try to refine for the very best fit
-  then select ``moncar``.  However, do not choose this option with more than
-  about 10 or 15 free parameters as it can take a long time.  Typically with
+  then select ``moncar``. However, do not choose this option with more than
+  about 10 or 15 free parameters as it can take a long time. Typically with
   ``moncar`` you need to start the fitting and then do something else for a
   while (many hours or more).  
 
 ``--inherit-from``
   This provides a way to construct a model which is similar to an existing
-  model but has some differences.  All the model parameters which are 
+  model but has some differences. All the model parameters which are 
   exactly the same will be taking from the inherited model specification.
  
 Assuming you have created a model specification file ``my_model_spec.json``
-then a typical calling sequence from the Xija source directory is::
+then a typical calling sequence from the Xija source directory is:
 
-  xija_gui_fit --stop 2012:002 --days 180 my_model_spec.json
+.. code-block:: bash
+
+    % xija_gui_fit --stop 2012:002 --days 180 my_model_spec.json
 
 
 Manipulating plots
 ^^^^^^^^^^^^^^^^^^^^
 
 Many model components have built-in plots that can be added to the fit window
-via the ``Add plots...`` drop down menu.  The available plot names correspond to the
-model component followed by a description of the plot.  Plots can be deleted by
+via the ``Add plots...`` drop down menu. The available plot names correspond to the
+model component followed by a description of the plot. Plots can be deleted by
 pressing the corresponding ``Delete`` button.
 
+For the particular node that is being modeled, there will be a plot showing the data
+(blue) and model (red) together vs time. 
 One handy feature is that the time-based plots are always linked in the time
 axis so that if you zoom in or pan on one then all plots zoom or pan accordingly.  
 When you want to go back to the full view, you can use the ``Home`` button on the 
@@ -367,22 +388,24 @@ Manipulating parameters
 One of the key features of ``xija_gui_fit`` is the ability to visualize and
 manipulate the dozens of parameters in a typical Xija model.  
 
-The parameters are on the right side panel.  Each one has a checkbox that
+The parameters are on the right side panel. Each one has a checkbox that
 indicates whether it will be fit (checked) or not (unchecked). The value is
 shown, then the minimum allowed fit value, a slider bar to select the value,
-and then the maximum allowed fit value.  As you change the slider the model
-will be recalculated and the plots updated.  It helps to make the ``xija_gui_fit``
+and then the maximum allowed fit value. As you change the slider the model
+will be recalculated and the plots updated. It helps to make the ``xija_gui_fit``
 window as wide as possible to make the sliders longer.
 
 If you want to change the min or max values just type in the box and then hit
-enter.  (If you don't hit enter the new value won't apply).
+enter. (If you don't hit enter the new value won't apply).
 
 You can freeze or thaw many parameters at once using the "glob" syntax in the
-entry box at the top of the fit window.  Examples::
+entry box at the top of the fit window. Examples:
 
-  thaw *                 # thaw all parameters
-  freeze solarheat*      # freeze all the solarheat params
-  freeze solarheat*_dP_* # freeze the long-term solarheat variation params
+.. code-block:: bash
+
+    thaw *                 # thaw all parameters
+    freeze solarheat*      # freeze all the solarheat params
+    freeze solarheat*_dP_* # freeze the long-term solarheat variation params
 
 Fit strategy
 ^^^^^^^^^^^^^^
@@ -405,30 +428,51 @@ skill here. A few rules of thumb and tips:
     thaw      heatsink_tau        Typical time scale
     thaw      coupling_*             30
 
-* Almost always have the ``solarheat_*_bias`` terms frozen at 0.  This
+* Almost always have the ``solarheat_*_bias`` terms frozen at 0. This
   parameter is degenerate with the ``solarheat_*_P_*`` values and is used for
   certain diagnostics.
 
 * Once you have a model that fits reasonably well over the one year period then freeze all
-  parameters *except* for ``solarheat_*_dP_*`` and ``solarheat_*_ampl`` parameters.  Fit
+  parameters *except* for ``solarheat_*_dP_*`` and ``solarheat_*_ampl`` parameters. Fit
   over a 2-3 year time period which ends at the present time.
 
 * Next you might want to refine the ``solarheat_*_P_*`` parameters at this point by
-  thawing those ones and freezing the long-term parameters and fitting.  Remember that if
+  thawing those ones and freezing the long-term parameters and fitting. Remember that if
   the time span is not long enough then ``P`` and ``dP`` are degenerate and the fit may
   not converge.
 
 * It can be useful to include long normal-sun dwells in the fitting to have
   some high-temperature data in the fit dataset.
 
-* Remember to save your model fit when you get a good fit.  It is not saved by
-  default and there is currently no warning to this effect.  Often there is a
+* Remember to save your model fit when you get a good fit. It is not saved by
+  default and there is currently no warning to this effect. Often there is a
   progression of model fits and it may be useful to incrementally number the
-  models, e.g. ``pcm03t_1.json``, ``pcm03t_2.json``, etc.  By convention the
+  models, e.g. ``pcm03t_1.json``, ``pcm03t_2.json``, etc. By convention the
   final "flight" models that get configured are called
   ``<modelname>_model_spec.json``, so avoid using this name during development.
 
 * Saving also saves the state of plots and your parameters.
+
+Other ``xija_gui_fit`` features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Histogram Button
+++++++++++++++++
+
+.. image:: histogram.png
+   :width: 100 %
+
+Model Info Button
+^^^^^^^^^^^^^^^^^
+
+.. image:: model_info.png
+   :width: 50 %
+
+Write Table Button
+^^^^^^^^^^^^^^^^^^
+
+.. image:: write_table.png
+   :width: 25 %
 
 Bad Times
 ---------
@@ -436,9 +480,11 @@ Bad Times
 If there are one or more intervals of time where the data are effectively
 bad for fitting (i.e. the thermal model is not expected to predict accurately
 due to off-nominal spacecraft configuration), then one can add a ``bad_times``
-tag to the JSON model file.  This would like::
+tag to the JSON model file. This would look like:
 
-  {
+.. code-block:: JSON
+
+    {
       "bad_times": [
           [
               "2014:001",
@@ -459,18 +505,21 @@ tag to the JSON model file.  This would like::
               ],
               "init_kwargs": {},
               "name": "mask__1dpamzt_gt"
-          },
-      ...
+          }
+      ]
+    }
 
 
 Exercises
 -----------
 
 The exercise for both teams will be to first get familiar with the GUI fit tool
-by playing with an existing calibrated model.  Do one of the following::
+by playing with an existing calibrated model. Do one of the following:
 
-  % cp ~aldcroft/git/xija/examples/dpa/dpa.json ./          # ACIS
-  % cp ~aldcroft/git/xija/examples/minusz/minusz.json ./    # Spacecraft
+.. code-block:: bash
+
+    % cp ~aldcroft/git/xija/examples/dpa/dpa.json ./          # ACIS
+    % cp ~aldcroft/git/xija/examples/minusz/minusz.json ./    # Spacecraft
 
 You will run ``xija_gui_fit`` specifying the stop time as ``2012:095`` and
 the number of days to fit as ``90``.
