@@ -187,8 +187,8 @@ class WriteTableWindow(QtWidgets.QMainWindow):
     def save_ascii_table(self):
         from astropy.table import Table, Column
         dlg = QtWidgets.QFileDialog()
-        dlg.setNameFilters(["DAT files (*.dat)", "TXT files (*.txt)", "All files (*)"])
-        dlg.selectNameFilter("DAT files (*.dat)")
+        dlg.setNameFilters(["ECSV files (*.ecsv)", "All files (*)"])
+        dlg.selectNameFilter("ECSV files (*.ecsv)")
         dlg.setAcceptMode(dlg.AcceptSave)
         dlg.exec_()
         filename = str(dlg.selectedFiles()[0])
