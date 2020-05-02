@@ -28,9 +28,10 @@ Navigating the Xija source
 ---------------------------
 
 The `Xija source <http://github.com/sot/xija>`_ is always available at `github
-<http://github.com>`_.  Within the **Files** tab you will find a directory
-browser.  At the top level you will see the ``xija`` directory that contains
-the actual Xija package files. Within the ``xija`` directory the key files are::
+<http://github.com>`_. On the front page, there is a code browser, and within
+the ``xija`` directory the key files are:
+
+.. code-block:: bash
 
   model.py             Top-level model class and functionality
   component/           Model components directory
@@ -38,29 +39,44 @@ the actual Xija package files. Within the ``xija`` directory the key files are::
             heat.py    Heat components (SolarHeat, passive and active heaters)
             mask.py    Mask components
 
+GUI Fit
+-------
+
+Many of the examples given in this tutorial use ``xija_gui_fit`` to run the
+model, fit it, and examine the results. To find out more about the workings
+of ``xija_gui_fit``, we recommend visiting :ref:`gui-fit` first.
+
 Creating and understanding models
 ----------------------------------
 
-The example models show here are available in the ``examples/doc/`` directory of the Xija git repository.
+The example models show here are available in the ``examples/doc/`` directory of
+the Xija git repository.
 
-Each model component is handled by a
-separate Python class.  Some currently implemented examples include:
+Each model component is handled by a separate Python class. Some currently 
+implemented examples include:
 
-* :class:`~xija.component.base.ModelComponent` : model component base class (name, parameter methods)
-* :class:`~xija.component.base.Node` : single node with a temperature, sigma, data_quantization, etc
-* :class:`~xija.component.base.Coupling` : Couple two nodes together (one-way coupling)
+* :class:`~xija.component.base.ModelComponent` : model component base class 
+  (name, parameter methods)
+* :class:`~xija.component.base.Node` : single node with a temperature, sigma,
+  data_quantization, etc
+* :class:`~xija.component.base.Coupling` : Couple two nodes together (one-way 
+  coupling)
 * :class:`~xija.component.base.HeatSink` : Fixed temperature external heat bath
 * :class:`~xija.component.heat.SolarHeat` : Solar heating (pitch dependent)
-* :class:`~xija.component.heat.EarthHeat` : Earth heating of ACIS cold radiator (attitude, ephem dependent)
-* :class:`~xija.component.heat.PropHeater` : Proportional heater (P = k * (T - T_set) for T > T_set)
-* :class:`~xija.component.heat.ThermostatHeater` : Thermostat heater (with configurable deadband)
-* :class:`~xija.component.heat.AcisDpaStatePower` : Heating from ACIS electronics (ACIS config dependent CCDs, FEPs etc)
+* :class:`~xija.component.heat.EarthHeat` : Earth heating of ACIS cold radiator 
+  (attitude, ephem dependent)
+* :class:`~xija.component.heat.PropHeater` : Proportional heater 
+  (P = k * (T - T_set) for T > T_set)
+* :class:`~xija.component.heat.ThermostatHeater` : Thermostat heater (with 
+  configurable deadband)
+* :class:`~xija.component.heat.AcisDpaStatePower` : Heating from ACIS electronics
+  (ACIS config dependent CCDs, FEPs etc)
 
 Example 1: simplest model
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Start with the simplest example with a single node with solar heating.  We use only two
-bin points at 45 and 180 degrees.
+Start with the simplest example with a single node with solar heating. We use 
+only two bin points at 45 and 180 degrees.
 
 .. code-block:: python
 
@@ -96,7 +112,8 @@ Points for discussion:
 Example 2: add a heat sink
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Same as example 1, but add a heat sink with a temperature of -16 C and a tau of 30 ksec.
+Same as example 1, but add a heat sink with a temperature of -16 C and a tau of
+30 ksec.
 
 .. code-block:: python
 
@@ -151,10 +168,10 @@ Points for discussion:
 
 * Fit the model
     * Naive try.
-    * Set heat sink time scale
+    * Set heat sink time scale.
 * Managing degenerate model parameters (heatsink T, solarheat bias, solarheat P values).
 * But note: eclipse data breaks degeneracy. This can be used for short-timescale components.
-* Save the best fit as ``example3_fit.json``
+* Save the best fit as ``example3_fit.json``.
 
 
 Working with a model
@@ -177,8 +194,8 @@ residuals versus temperature for the ACIS DPA model.  You can run this with
     msid = '1dpamzt'
     model_spec = 'dpa.json'
     
-    model = xija.XijaModel('dpa', start=start, stop=stop,
-                            model_spec=model_spec)
+    model = xija.ThermalModel('dpa', start=start, stop=stop,
+                              model_spec=model_spec)
     model.make()
     model.calc()
     
@@ -199,12 +216,12 @@ residuals versus temperature for the ACIS DPA model.  You can run this with
     ns = []
     xs = []
     for x0, x1 in zip(bins[:-1], bins[1:]):
-      ok = (dpa.dvals >= x0) & (dpa.dvals < x1)
-      val1, val99 = np.percentile(resid[ok], [1, 99])
-      xs.append((x0 + x1) / 2)
-      r1.append(val1)
-      r99.append(val99)
-      ns.append(sum(ok))
+        ok = (dpa.dvals >= x0) & (dpa.dvals < x1)
+        val1, val99 = np.percentile(resid[ok], [1, 99])
+        xs.append((x0 + x1) / 2)
+        r1.append(val1)
+        r99.append(val99)
+        ns.append(sum(ok))
     
     xspp = pointpair(bins[:-1], bins[1:])
     r1pp = pointpair(r1)
@@ -219,18 +236,23 @@ residuals versus temperature for the ACIS DPA model.  You can run this with
     plt.plot([5, 31], [3.5, 3.5], 'g--', alpha=1, label='+/- 3.5 degC')
     plt.plot([5, 31], [-3.5, -3.5], 'g--', alpha=1)
     for x, n, y in zip(xs, ns, r99):
-      plt.text(x, max(y + 1, 5), 'N={}'.format(n),
-           rotation='vertical', va='bottom', ha='center')
+        plt.text(x, max(y + 1, 5), 'N={}'.format(n),
+             rotation='vertical', va='bottom', ha='center')
     
     plt.legend(loc='upper right')
     
     plt.savefig('dpa_resid_{}_{}.png'.format(start, stop))
 
+which produces the following plot:
+
+.. image:: dpa_resid.png
+   :width: 50 %
+
 Modifying an existing model
 ----------------------------
 
 Much of the time the best way to create a new model is to start from an
-existing model.  There are a few strategies for doing this:
+existing model. There are a few strategies for doing this:
 
 * Extend an existing model at the Python API level
 * Create a new model in Python and inherit existing model parameters
@@ -240,19 +262,31 @@ existing model.  There are a few strategies for doing this:
 Extend an existing model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you have an existing model (e.g. ``pcm03t`` from the previous examples) and
+If you have an existing model (e.g. ``aacccdpt`` from the previous examples) and
 want to extend it by adding a model component, the technique is to read in the
-model,  add the component, make the model, and then write out the new model.
-This is illustrated in the `Xija extend model
-<xija_extend_model.html>`_ notebook.
+model, add the component, make the model, and then write out the new model. For
+example, if one wanted to add off-nominal roll to this model:
+
+.. code-block:: python
+
+    model = xija.XijaModel("aacccdpt", model_spec='aacccdpt.json')
+
+    model.add(xija.SolarHeatOffNomRoll,
+              'aacccdpt',
+              P_minus_y=0.0,
+              P_plus_y=0.0,
+              eclipse_comp='eclipse',
+              pitch_comp='pitch',
+              roll_comp='roll',
+             )
+
 
 Inherit from an existing model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This option provides a way to use some of the existing (calibrated) components
-from an existing model.  In particular if you want to remove a component this
-is one way to do it. This is illustrated in the `Xija inherit
-<xija_inherit.html>`_ IPython notebook.
+There is also a way to use some of the existing (calibrated) components from an
+existing model in a new one. In particular, if you want to remove a component, 
+this is one way to do it.
 
 Edit the model specification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -317,7 +351,8 @@ tag to the JSON model file. This would look like:
               ],
               "init_kwargs": {},
               "name": "mask__1dpamzt_gt"
-          }
+          },
+          ...
       ]
     }
 
