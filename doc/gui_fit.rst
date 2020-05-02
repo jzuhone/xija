@@ -234,6 +234,23 @@ inputs and outputs at the time marked by the brown line.
 Histogram Button
 ^^^^^^^^^^^^^^^^
 
+The ``Histogram`` button produces two histograms of the errors of the data. The
+first (left) is a 2-D histogram of errors (data - model) vs. temperature, which
+plots the errors themselves with the lines showing the 1%, 50%, and 99% 
+quantiles overlaid on top. Ideally, for a good model, the 50% quantile line
+should be centered on 0 and nearly vertical, and the 1% and 99% lines should be
+as close to the center as possible. On the right, this information is projected
+onto the x-axis, showing a 1-D histogram of the errors, also marking the
+minimum and maximum values. 
+
+These plots will not redraw with every model fit, but must be redrawn manually
+with the ``Redraw`` button on this window. There are also checkboxes to mask
+out the time periods during radzones and FMT1, which may be useful for different
+model types for assessing model performance only for times in which it is known
+that the model is reliable. 
+
+An example of these histograms is shown below:
+
 .. image:: histogram.png
    :width: 75 %
 
