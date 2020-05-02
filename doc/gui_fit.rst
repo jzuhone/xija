@@ -1,3 +1,5 @@
+.. _gui-fit:
+
 Fitting a model using ``xija_gui_fit``
 ======================================
 
