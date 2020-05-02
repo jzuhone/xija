@@ -378,9 +378,6 @@ class HeatSink(ModelComponent):
     def __str__(self):
         return 'heatsink__{0}'.format(self.node)
 
-    @property
-    def conds(self):
-        return np.ones(self.model.n_times, dtype='int32')
 
 class HeatSinkRef(ModelComponent):
     """Fixed temperature external heat bath, reparameterized so that varying
@@ -419,9 +416,6 @@ class HeatSinkRef(ModelComponent):
     def __str__(self):
         return 'heatsink__{0}'.format(self.node)
 
-    @property
-    def conds(self):
-        return np.ones(self.model.n_times, dtype='int32')
 
 class Pitch(TelemData):
     def __init__(self, model):
@@ -495,3 +489,24 @@ class SimZ(TelemData):
 class Roll(TelemData):
     def __init__(self, model):
         TelemData.__init__(self, model, 'roll', units='deg')
+
+
+class FEPOn(TelemData):
+    def __init__(self, model, fep_number):
+        super(FEPOn, self).__init__(model, 'fep_count')
+        self.fep_number = fep_number
+
+    def __str__(self):
+        return 'fep_on'
+
+    def get_dvals_tlm(self):
+        if self.fep_number == 0:
+            ret = self.model.cmd_states["fep_count"] == 6
+        elif self.fep_number == 1:
+            ret = self.model.cmd_states["fep_count"] > 0
+        else:
+            raise NotImplementedError
+        return ret.astype("float64")
+
+    def update(self):
+        self.mvals = self.get_dvals_tlm()

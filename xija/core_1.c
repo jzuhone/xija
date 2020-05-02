@@ -29,7 +29,6 @@ int calc_model_1(int n_times, int n_preds, int n_tmals, double dt,
             }
 
             for (i = 0; i < n_tmals; i++) {
-	        if (conds[i][j] == 0) continue;
                 opcode = tmal_ints[i][0];
                 i1 = tmal_ints[i][1];
                 i2 = tmal_ints[i][2];
@@ -75,6 +74,14 @@ int calc_model_1(int n_times, int n_preds, int n_tmals, double dt,
                             }
                         } else {
                             mvals[i3][j] = 0.0;
+                        }
+                        break;
+                    case 5: /* FEP heatsink */
+                        dt2 = tmal_floats[i][2] - y[i1];
+                        if (mvals[i2][j] == 0.0 && dt2 > 0.0) {
+                            if (i1 < n_preds) {
+                                deriv[i1] = deriv[i1] + (tmal_floats[i][0] - y[i1]) / tmal_floats[i][1];
+                            }
                         }
                         break;
                     }

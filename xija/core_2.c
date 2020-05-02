@@ -79,6 +79,13 @@ void dTdt(int j, int half, int n_preds, int n_tmals, int **tmal_ints,
                 }
                 if (half == 0) mvals[i3][j] = mvals_i3;
                 break;
+            case 5: /* FEP heatsink */
+                if (mvals_i2 > 0.0) {
+                    if (i1 < n_preds) {
+                        deriv[i1] += (tmal_floats[i][0] - y[i1]) / tmal_floats[i][1];
+                    }
+                }
+                break;
         }
     }
 

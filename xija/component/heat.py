@@ -1337,7 +1337,7 @@ class ACISFEPPower(PrecomputedHeatPower):
         self.data_times = None
 
     def __str__(self):
-        return 'acis_fep%d_power' % self.fep_number
+        return 'acis_fep_power__{}'.format(self.node)
 
     _turn_on = None
 
@@ -1396,18 +1396,6 @@ class FEPPropHeater(PrecomputedHeatPower):
                           )
         self.tmal_floats = (self.T_set, self.k)
 
-    _conds = None
-
-    @property
-    def conds(self):
-        if self._conds is None:
-            self._conds = np.zeros_like(self.fep_count.dvals, dtype="int32")
-            if self.fep_number == 0:
-                self._conds += (self.fep_count.dvals == 6).astype("int32")
-            else:
-                self._conds += (self.fep_count.dvals > 0).astype("int32")
-        return self._conds
-
     def plot_data__time(self, fig, ax):
         lines = ax.get_lines()
         if lines:
@@ -1433,46 +1421,37 @@ class FEPHeatSinkRef(ModelComponent):
 
     In code below, "T" corresponds to "Te" above.  The "T" above is node.dvals.
     """
-    def __init__(self, model, node, fep_number, T=0.0, tau=20.0, T_ref=20.0,
-                 fep_count=None):
+    def __init__(self, model, node, fep_number, fep_on,
+                 T=0.0, tau=20.0, T_ref=20.0):
         ModelComponent.__init__(self, model)
         self.node = self.model.get_comp(node)
         self.fep_number = fep_number
         self.add_par('P', (T - T_ref) / tau, min=-10.0, max=10.0)
         self.add_par('tau', tau, min=2.0, max=200.0)
         self.add_par('T_ref', T_ref, min=-100, max=100)
-        self.fep_count = self.model.get_comp(fep_count)
+        self.fep_on = self.model.get_comp(fep_on)
 
     def update(self):
-        self.tmal_ints = (tmal.OPCODES['heatsink'],
-                          self.node.mvals_i)  # dy1/dt index
+        self.tmal_ints = (tmal.OPCODES['fep_heatsink'],
+                          self.node.mvals_i,  # dy1/dt index
+                          self.fep_on.mvals_i)
         self.tmal_floats = (self.P * self.tau + self.T_ref,
-                            self.tau)
+                            self.tau, self.T_ref)
 
     def __str__(self):
-        return 'fep{0}_heatsink__{1}'.format(self.fep_number, self.node)
+        return 'fep_heatsink__{0}'.format(self.node)
 
-    _conds = None
-
-    @property
-    def conds(self):
-        if self._conds is None:
-            self._conds = np.zeros_like(self.fep_count.dvals, dtype="int32")
-            if self.fep_number == 0:
-                self._conds += (self.fep_count.dvals < 6).astype("int32")
-            else:
-                self._conds += (self.fep_count.dvals == 0).astype("int32")
-        return self._conds
 
 class ACISFEPPower(PrecomputedHeatPower):
     def __init__(self, model, node, fep_number,
-                 P0=10.0, P1=10.0, fep_count=None,
+                 P0=10.0, P1=10.0, Poff=10.0, fep_count=None,
                  clocking=None):
         super(ACISFEPPower, self).__init__(model)
         self.node = self.model.get_comp(node)
         self.fep_number = fep_number
         self.fep_count = self.model.get_comp(fep_count)
         self.clocking = self.model.get_comp(clocking)
+        self.add_par('Poff', Poff, min=0.0, max=100.0)
         self.add_par('P0', P0, min=0.0, max=100.0)
         self.add_par('P1', P1, min=0.0, max=100.0)
         self.n_mvals = 1
@@ -1495,7 +1474,8 @@ class ACISFEPPower(PrecomputedHeatPower):
         return self._fep_on
 
     def update(self):
-        self.mvals = self.P0 * (self.clocking.dvals == 0) * self.fep_on
+        self.mvals = self.Poff * (1.0-self.fep_on)
+        self.mvals += self.P0 * (self.clocking.dvals == 0) * self.fep_on
         self.mvals += self.P1 * (self.clocking.dvals == 1) * self.fep_on
         self.tmal_ints = (tmal.OPCODES['precomputed_heat'],
                           self.node.mvals_i,  # dy1/dt index
