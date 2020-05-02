@@ -280,6 +280,8 @@ example, if one wanted to add off-nominal roll to this model:
               roll_comp='roll',
              )
 
+    model.write('aacccdpt_roll.json')
+
 
 Inherit from an existing model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
