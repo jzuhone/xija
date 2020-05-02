@@ -413,7 +413,7 @@ class XijaModel(object):
         ms = self.model_spec
 
         model_call = "model = xija.XijaModel({}, start={}, stop={}, dt={},\n"
-        model_call += "evolve_method={} rk4={}\n"
+        model_call += "evolve_method={} rk4={})\n"
 
         print("import sys", file=out)
         print("import xija\n", file=out)
