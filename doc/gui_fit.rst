@@ -179,13 +179,43 @@ be plotted on the ``data__time`` and ``resid__data`` plots for the modeled
 temperature. To enable this, toggle the "Show limits" checkbox. Different colors
 are used for different limits:
 
-* 
-*
-*
+* ``"acisi_data_quality"``: blue, for the ACIS-I data quality limit
+* ``"aciss_data_quality"``: purple, for the ACIS-S data quality limit
+* ``"planning_caution_high"``: grey, The caution planning limit for high
+  temperatures, used to avoid the planning warning high limit (currently
+  only used for the ACA temperature). 
+* ``"planning_warning_low"``: green, The warning planning limit for low
+  temperatures, used to avoid the ODB caution low limit. 
+* ``"planning_warning_high"``: green, The warning planning limit for high
+  temperatures, used to avoid the ODB caution high limit. 
+* ``"odb_caution_low"``: The ODB caution ("yellow") low limit. 
+* ``"odb_caution_high"``: The ODB caution ("yellow") high limit. 
+* ``"odb_warning_low"``: The ODB warning ("red") low limit. 
+* ``"odb_warning_high"``: The ODB warning ("red") high limit. 
+
+In order to see these limits in ``xija_gui_fit``, one needs to include the limit
+information in the model JSON file at the top level like so:
+
+.. code-block::
+
+    {
+        "limits": {
+            "name": "1dpamzt",
+            "odb_warning_low": -37.5,
+            "odb_caution_low": -20.0,
+            "planning_warning_high": 37.5,
+            "odb_caution_high": 39.5,
+            "odb_warning_high": 41.5
+        },
+        ...
+    }
+
+which includes the name of the MSID which has the limits, as well as the limit
+values which one wants to see.
 
 It may also be useful to know when the radzones begin and end. Toggling the
 "Show radzones" checkbox puts dashed green lines on the time plots indicating the
-times of the radzones. 
+times of the radzones. Both of these options can be seen in the following plot:
 
 .. image:: annot_lims_rads.png
    :width: 75 %
