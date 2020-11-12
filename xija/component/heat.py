@@ -1444,13 +1444,14 @@ class FEPHeatSinkRef(ModelComponent):
 
 class ACISFEPPower(PrecomputedHeatPower):
     def __init__(self, model, node, fep_number,
-                 P0=10.0, P1=10.0, Poff=10.0, fep_count=None,
+                 dP=0.0, P0=10.0, P1=10.0, Poff=10.0, fep_count=None,
                  clocking=None):
         super(ACISFEPPower, self).__init__(model)
         self.node = self.model.get_comp(node)
         self.fep_number = fep_number
         self.fep_count = self.model.get_comp(fep_count)
         self.clocking = self.model.get_comp(clocking)
+        self.add_par('dP', dP, min=0.0, max=100.0)
         self.add_par('Poff', Poff, min=0.0, max=100.0)
         self.add_par('P0', P0, min=0.0, max=100.0)
         self.add_par('P1', P1, min=0.0, max=100.0)
@@ -1473,8 +1474,23 @@ class ACISFEPPower(PrecomputedHeatPower):
                 self._fep_on += (self.fep_count.dvals >= self.fep_number)
         return self._fep_on
 
+    _turn_on = None
+
+    @property
+    def turn_on(self):
+        if self._turn_on is None:
+            last_fep = np.roll(self.fep_count.dvals, 1)
+            last_fep[0] = self.fep_count.dvals[0]
+            if self.fep_number == 0:
+                self._turn_on = (self.fep_count.dvals == 6) & (last_fep == 5)
+            elif self.fep_number == 1:
+                self._turn_on = (self.fep_count.dvals > 0) & (last_fep == 0)
+            self._turn_on = self._turn_on.astype("float64")
+        return self._turn_on
+
     def update(self):
         self.mvals = self.Poff * (1.0-self.fep_on)
+        self.mvals += self.dP * self.turn_on
         self.mvals += self.P0 * (self.clocking.dvals == 0) * self.fep_on
         self.mvals += self.P1 * (self.clocking.dvals == 1) * self.fep_on
         self.tmal_ints = (tmal.OPCODES['precomputed_heat'],
