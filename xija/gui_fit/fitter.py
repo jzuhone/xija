@@ -33,7 +33,7 @@ class CalcModel(object):
         fit_logger.info('Calculating params:')
         for parname, parval, newparval in zip(self.model.parnames, self.model.parvals, parvals):
             if parval != newparval:
-                fit_logger.info('  {0}: {1}'.format(parname, newparval))
+                fit_logger.info(f'  {parname}: {newparval}')
         self.model.parvals = parvals
 
         return np.ones_like(x)
@@ -43,11 +43,12 @@ class CalcStat(object):
     def __init__(self, model, pipe, maxiter):
         self.pipe = pipe
         self.model = model
-        self.cache_fit_stat = {}
         self.min_fit_stat = None
         self.min_parvals = self.model.parvals
         self.niter = 0
         self.maxiter = maxiter
+        self.fit_stat = []
+        self.par_vals = []
 
     def __call__(self, _data, _model, staterror=None, syserror=None, weight=None):
         """Calculate fit statistic for the xija model.  The args _data and _model
@@ -55,7 +56,10 @@ class CalcStat(object):
         stored in the xija model self.model.
         """
         fit_stat = self.model.calc_stat()
-        fit_logger.info('Fit statistic: %.4f' % fit_stat)
+        self.fit_stat.append(fit_stat)
+        self.par_vals.append(self.model.parvals)
+        fit_logger.info(f'Num iterations: {self.niter}')
+        fit_logger.info(f'Fit statistic: {fit_stat:.4f}')
 
         if self.min_fit_stat is None or fit_stat < self.min_fit_stat:
             self.min_fit_stat = fit_stat
@@ -63,10 +67,12 @@ class CalcStat(object):
 
         self.message = {'status': 'fitting',
                         'time': time.time(),
+                        'all_parvals': self.par_vals,
                         'parvals': self.model.parvals,
-                        'fit_stat': fit_stat,
+                        'fit_stat': self.fit_stat,
                         'min_parvals': self.min_parvals,
-                        'min_fit_stat': self.min_fit_stat}
+                        'min_fit_stat': self.min_fit_stat,
+                        'niter': self.niter}
         self.pipe.send(self.message)
 
         while self.pipe.poll():
@@ -77,7 +83,7 @@ class CalcStat(object):
 
         self.niter += 1
         if self.niter >= self.maxiter:
-            fit_logger.warning('Reached maximum number of iterations: %d' % self.maxiter)
+            fit_logger.warning(f'Reached maximum number of iterations: {self.maxiter}')
             self.model.parvals = self.min_parvals
             raise FitTerminated('terminated')
 
@@ -125,12 +131,13 @@ class FitWorker(object):
             self.parent_pipe.send('terminate')
 
     def fit(self):
+        calc_model = CalcModel(self.model)
         dummy_data = np.zeros(1)
         dummy_times = np.arange(1)
         ui.load_arrays(1, dummy_times, dummy_data)
         ui.set_method(self.method)
         ui.get_method().config.update(sherpa_configs.get(self.method, {}))
-        ui.load_user_model(CalcModel(self.model), 'xijamod')  # sets global xijamod
+        ui.load_user_model(calc_model, 'xijamod')  # sets global xijamod
         ui.add_user_pars('xijamod', self.model.parnames)
         ui.set_model(1, 'xijamod')
         calc_stat = CalcStat(self.model, self.child_pipe, self.maxiter)
@@ -152,6 +159,7 @@ class FitWorker(object):
                 fit_logger.info('Fit finished normally')
             except FitTerminated as err:
                 calc_stat.message['status'] = 'terminated'
-                fit_logger.warning('Got FitTerminated exception {}'.format(err))
+                fit_logger.warning(f'Got FitTerminated exception {err}')
 
         self.child_pipe.send(calc_stat.message)
+

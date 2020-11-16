@@ -144,7 +144,6 @@ def clearLayout(layout):
     Parameters
     ----------
     layout :
-        
 
     Returns
     -------
@@ -552,3 +551,82 @@ class PlotsBox(QtWidgets.QVBoxLayout):
         for pb in self.plot_boxes:
             pb.update_xline()
         self.main_window.line_data_window.update_data()
+
+
+class ParamHistoryWindow(QtWidgets.QMainWindow):
+    def __init__(self, model, main_window):
+        super(ParamHistoryWindow, self).__init__()
+        self.model = model
+        self.mw = main_window
+        wid = QtWidgets.QWidget(self)
+        self.setWindowTitle("Fit History")
+        self.box = QtWidgets.QVBoxLayout()
+        wid.setLayout(self.box)
+        self.setGeometry(0, 0, 800, 600)
+        self.setCentralWidget(wid)
+
+        canvas = MplCanvas(parent=None)
+        toolbar = NavigationToolbar(canvas, parent=None)
+
+        par_select = QtWidgets.QComboBox()
+        par_select.addItem("fit_stat")
+
+        self.par_names = ["fit_stat"]
+
+        for par in self.model.pars:
+            self.par_names.append(par.full_name)
+            par_select.addItem(par.full_name)
+
+        par_select.activated[str].connect(self.change_par)
+
+        self.which_par = 0
+
+        redraw_button = QtWidgets.QPushButton('Redraw')
+        redraw_button.clicked.connect(self.make_plot)
+
+        close_button = QtWidgets.QPushButton('Close')
+        close_button.clicked.connect(self.close_window)
+
+        toolbar_box = QtWidgets.QHBoxLayout()
+        toolbar_box.addWidget(toolbar)
+        toolbar_box.addStretch(1)
+        toolbar_box.addWidget(par_select)
+        toolbar_box.addWidget(redraw_button)
+        toolbar_box.addWidget(close_button)
+
+        self.box.addWidget(canvas)
+        self.box.addLayout(toolbar_box)
+
+        self.fig = canvas.fig
+        self.canvas = canvas
+
+        self.make_plot()
+
+    def change_par(self, par):
+        self.which_par = self.par_names.index(par)
+        self.make_plot()
+
+    def close_window(self, *args):
+        self.close()
+
+    def make_plot(self):
+        self.fig.clf()
+
+        par_name = self.par_names[self.which_par]
+
+        if par_name == "fit_stat":
+            y = self.mw.fit_stat_hist
+        else:
+            y = [pv[self.which_par-1]
+                 for pv in self.mw.par_vals_hist]
+
+        ax = self.fig.add_subplot(111)
+
+        x = np.arange(len(y))
+
+        ax.plot(x, y)
+
+        ax.set_xlabel("# of iterations")
+        ax.set_ylabel(par_name)
+
+        self.canvas.draw()

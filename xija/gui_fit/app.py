@@ -30,7 +30,8 @@ import xija
 from xija.component.base import Node, TelemData
 
 from .fitter import FitWorker, fit_logger
-from .plots import PlotsBox, HistogramWindow
+from .plots import PlotsBox, HistogramWindow, \
+    ParamHistoryWindow
 from .utils import in_process_console, WidgetTable
 from .windows import LineDataWindow, ModelInfoWindow, \
     WriteTableWindow
@@ -193,7 +194,7 @@ class PanelParam(object):
         self._max.set_par_attr(val)
 
     def __repr__(self):
-        return "val: {} min: {} max: {}".format(self._val, self._min, self._max)
+        return f"val: {self._val} min: {self._min} max: {self._max}"
 
 
 class PanelSlider(QtWidgets.QSlider):
@@ -316,6 +317,7 @@ class ControlButtonsPanel(Panel):
         self.stop_button = QtWidgets.QPushButton("Stop")
         self.save_button = QtWidgets.QPushButton("Save")
         self.hist_button = QtWidgets.QPushButton("Histogram")
+        self.history_button = QtWidgets.QPushButton("Fit History")
         self.write_table_button = QtWidgets.QPushButton("Write Table")
         self.model_info_button = QtWidgets.QPushButton("Model Info")
         self.add_plot_button = self.make_add_plot_button()
@@ -362,6 +364,7 @@ class ControlButtonsPanel(Panel):
         self.bottom_panel.pack_start(self.limits_panel)
         self.bottom_panel.pack_start(self.line_panel)
         self.bottom_panel.add_stretch(1)
+        self.bottom_panel.pack_start(self.history_button)
         self.bottom_panel.pack_start(self.model_info_button)
         self.bottom_panel.pack_start(self.write_table_button)
         self.bottom_panel.pack_start(self.console_button)
@@ -456,6 +459,7 @@ class MainWindow(object):
         self.cbp.console_button.clicked.connect(self.open_console)
         self.cbp.quit_button.clicked.connect(QtCore.QCoreApplication.instance().quit)
         self.cbp.hist_button.clicked.connect(self.make_histogram)
+        self.cbp.history_button.clicked.connect(self.make_par_history)
         self.cbp.radzone_chkbox.stateChanged.connect(self.plot_radzones)
         self.cbp.limits_chkbox.stateChanged.connect(self.plot_limits)
         self.cbp.line_chkbox.stateChanged.connect(self.plot_line)
@@ -476,7 +480,7 @@ class MainWindow(object):
                 self.add_plot(plot_name)
                 time.sleep(0.05)  # is it needed?
             except ValueError:
-                print("ERROR: Unexpected plot_name {}".format(plot_name))
+                print(f"ERROR: Unexpected plot_name {plot_name}")
 
         # Show everything finally
         main_window_hbox.addLayout(mlp.box)
@@ -485,6 +489,11 @@ class MainWindow(object):
         self.window.show()
         self.hist_window = None
         self.model_info_window = None
+
+        self.par_vals = []
+        self.fit_stat = []
+        self._par_vals = []
+        self._fit_stat = []
 
     @property
     def model_spec(self):
@@ -503,6 +512,20 @@ class MainWindow(object):
         if newfile:
             self.file_md5sum = self.md5sum
         self.checksum_match = self.file_md5sum == self.md5sum
+
+    @property
+    def fit_stat_hist(self):
+        return self.fit_stat + self._fit_stat
+
+    @property
+    def par_vals_hist(self):
+        return self.par_vals + self._par_vals
+
+    def _reset_fit_history(self):
+        self.fit_stat += self._fit_stat
+        self.par_vals += self._par_vals
+        self._fit_stat = []
+        self._par_vals = []
 
     def open_console(self):
 
@@ -529,7 +552,7 @@ class MainWindow(object):
             --------
             >>> freeze("solarheat*_P*")
             """
-            self.parse_command("freeze {}".format(params))
+            self.parse_command(f"freeze {params}")
 
         def thaw(params):
             """Thaw the parameter or parameters which
@@ -573,7 +596,6 @@ class MainWindow(object):
             >>> # When only the year and DOY are included,
             >>> # assumed time is 12:00:00
             >>> ignore("2019:100:09:10:12", "2019:200")
-            
             >>> ignore(None, "2019:056:17:15:10")
             """
             if tstart is None:
@@ -648,12 +670,17 @@ class MainWindow(object):
         self.write_table_window.show()
 
     def model_info(self):
-        self.model_info_window = ModelInfoWindow(self.model, self)
+        self.model_info_window = ModelInfoWindow(self.model, self,
+                                                 gui_config['filename'])
         self.model_info_window.show()
 
     def make_histogram(self):
         self.hist_window = HistogramWindow(self.model, self.hist_msids)
         self.hist_window.show()
+
+    def make_par_history(self):
+        self.par_history = ParamHistoryWindow(self.model, self)
+        self.par_history.show()
 
     def plot_limits(self, state):
         self.show_limits = state == QtCore.Qt.Checked
@@ -700,10 +727,14 @@ class MainWindow(object):
             self.main_left_panel.plots_box.update_plots(redraw=fit_stopped)
             if self.show_line:
                 self.line_data_window.update_data()
+            self._par_vals = msg["all_parvals"]
+            self._fit_stat = msg["fit_stat"]
 
         # If fit has not stopped then set another timeout 200 msec from now
         if not fit_stopped:
             QtCore.QTimer.singleShot(200, self.fit_monitor)
+        else:
+            self._reset_fit_history()
 
     def command_activated(self):
         """Respond to a command like "freeze solarheat*dP*" submitted via the
